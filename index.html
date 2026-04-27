@@ -45,7 +45,7 @@ h1{margin:0;font-size:clamp(40px,6.4vw,76px);line-height:1;letter-spacing:-.03em
 .url-input::placeholder{color:var(--mute);}
 .clear-btn{background:transparent;border:0;color:var(--mute);width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;margin-right:8px;}
 .clear-btn:hover{background:var(--border);color:var(--text);}
-.convert-btn{display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 22px;border-radius:10px;font-size:14px;font-weight:500;border:0;white-space:nowrap;background:linear-gradient(120deg,var(--accent),var(--accent2));color:white;box-shadow:0 8px 24px -6px var(--glow),inset 0 1px 0 rgba(255,255,255,.25);transition:all .2s;position:relative;overflow:hidden;}
+.convert-btn{display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 22px;border-radius:10px;font-size:14px;font-weight:500;border:0;white-space:nowrap;background:linear-gradient(120deg,var(--accent),var(--accent2));color:white;box-shadow:0 8px 24px -6px var(--glow),inset 0 1px 0 rgba(255,255,255,.25);transition:all .2s;}
 .convert-btn:hover:not(:disabled){box-shadow:0 12px 40px -6px var(--glow);transform:translateY(-1px);}
 .convert-btn:disabled{opacity:.4;cursor:not-allowed;}
 .input-help{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--mute);padding:0 4px;}
@@ -69,6 +69,8 @@ h1{margin:0;font-size:clamp(40px,6.4vw,76px);line-height:1;letter-spacing:-.03em
 .chip.on .chip-badge{background:white;color:var(--accent);}
 .dl-btn{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 22px;border-radius:10px;font-size:14px;font-weight:500;border:0;background:linear-gradient(120deg,var(--accent),var(--accent2));color:white;box-shadow:0 8px 24px -6px var(--glow);transition:all .2s;align-self:flex-start;margin-top:4px;}
 .dl-btn:hover{transform:translateY(-1px);box-shadow:0 12px 40px -6px var(--glow);}
+.cobalt-note{font-family:var(--mono);font-size:10px;color:var(--mute);padding:0 4px;display:flex;align-items:center;gap:6px;}
+.cobalt-note span{color:var(--accent);}
 .stats{display:flex;gap:48px;flex-wrap:wrap;justify-content:center;margin-top:24px;padding-top:24px;border-top:1px solid var(--border);width:100%;}
 .stat-n{font-family:var(--mono);font-size:22px;font-weight:500;letter-spacing:-.02em;color:var(--accent);}
 .stat-l{font-family:var(--mono);font-size:11px;color:var(--mute);margin-top:2px;}
@@ -153,6 +155,7 @@ footer{margin-top:80px;padding:64px 32px 32px;border-top:1px solid var(--border)
         </div>
         <div class="row"><span class="row-lbl">Formato</span><div class="chips" id="chipsContainer"></div></div>
         <button class="dl-btn" onclick="doDownload()"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v8m0 0l-3-3m3 3l3-3M2 12h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="dlBtnText">Descargar MP3 320</span></button>
+        <div class="cobalt-note">▶ Se abrirá <span>cobalt.tools</span> — el convertidor más confiable y sin ads</div>
       </div>
     </div>
     <div class="stats fade" style="animation-delay:.5s">
@@ -232,7 +235,13 @@ function handleConvert(){if(currentId)doDownload();}
 function setType(t){currentType=t;document.getElementById('typeAudio').className=t==='audio'?'typebtn on':'typebtn';document.getElementById('typeVideo').className=t==='video'?'typebtn on':'typebtn';currentFormat=t==='audio'?'mp3-320':'1080';renderChips();}
 function renderChips(){const fmts=currentType==='audio'?AF:VF;chipsContainer.innerHTML='';fmts.forEach(f=>{const b=document.createElement('button');b.className='chip'+(currentFormat===f.v?' on':'');b.onclick=()=>{currentFormat=f.v;renderChips();updateBtn();};let h=f.l;if(f.sub)h+=' <span class="chip-sub">'+f.sub+'</span>';if(f.badge)h+=' <span class="chip-badge">4K</span>';b.innerHTML=h;chipsContainer.appendChild(b);});updateBtn();}
 function updateBtn(){dlBtnText.textContent='Descargar '+currentFormat.toUpperCase().replace('-',' ');}
-function doDownload(){if(!currentId)return;const m={'mp3-320':'mp3','mp3-192':'mp3','m4a':'m4a','360':'360','720':'720','1080':'1080','1440':'1440','2160':'2160'};window.open('https://loader.to/en/download?url=https://www.youtube.com/watch?v='+currentId+'&f='+(m[currentFormat]||'mp3'),'_blank');}
+
+function doDownload(){
+  if(!currentId)return;
+  const ytUrl='https://www.youtube.com/watch?v='+currentId;
+  // cobalt.tools — open source, sin ads, más confiable
+  window.open('https://cobalt.tools/#'+encodeURIComponent(ytUrl),'_blank');
+}
 
 // FAQ
 const FAQS=[{q:'¿Funciona en mobile?',a:'Sí. Abre el sitio desde Safari o Chrome en iOS o Android, pega el link de YouTube y descarga. No necesitas instalar nada.'},{q:'¿En qué formatos puedo descargar?',a:'Audio en MP3 (192 y 320 kbps) y M4A. Video en MP4 desde 360p hasta 4K (2160p). Eliges la calidad antes de descargar.'},{q:'¿Necesito crear una cuenta?',a:'No. Y2Free es 100% gratis y sin registro. Solo pegas el link y descargas.'},{q:'¿Hay límite de descargas por día?',a:'Ningún límite. Puedes convertir todos los videos que necesites.'},{q:'¿La calidad del audio se pierde al convertir?',a:'No re-comprimimos cuando no es necesario. La calidad se preserva al máximo disponible.'},{q:'¿Es legal usar Y2Free?',a:'Está pensada para descargar contenido propio, audio sin copyright, o material con permiso del autor. Respeta siempre los derechos de los creadores.'}];
