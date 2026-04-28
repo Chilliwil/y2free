@@ -385,17 +385,11 @@ function updateDlBtn(){
 // ── API CALLS ──────────────────────────────────────────────────────────
 async function fetchAudio(id, quality){
   const res = await fetch(
-    `https://${AUDIO_API_HOST}/mp3/${id}?quality=${quality}`,
-    { headers: { 'x-rapidapi-key': AUDIO_API_KEY, 'x-rapidapi-host': AUDIO_API_HOST } }
+    `https://y2free.onrender.com/api/proxy?id=${id}&type=audio`
   );
   const data = await res.json();
-  if(data.url || data.link || data.downloadUrl){
-    return {
-      url: data.url || data.link || data.downloadUrl,
-      title: data.title || data.videoTitle || 'Audio descargado'
-    };
-  }
-  throw new Error(data.message || 'Sin URL de descarga');
+  if(data.error) throw new Error(data.error);
+  return { url: data.url, title: data.title || 'Audio descargado' };
 }
 
 async function fetchVideo(id, quality){
@@ -449,24 +443,18 @@ async function handleConvert(){
       resultTitle.textContent = title;
       resultMeta.textContent = currentType==='audio' ? 'MP3 · '+currentFormat+' kbps' : 'MP4 · '+currentFormat+'p';
       
-      // Para video abrimos la URL directa
-      if(currentType === 'video'){
-        resultDlBtn.onclick = function(e){
-          e.preventDefault();
-          const a = document.createElement('a');
-          a.href = downloadUrl;
-          a.download = title + '.mp4';
-          a.target = '_blank';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        };
-        resultDlBtn.href = '#';
-      } else {
-        resultDlBtn.onclick = null;
-        resultDlBtn.href = downloadUrl;
-        resultDlBtn.download = title + '.mp3';
-      }
+      // Abrir URL directa para audio y video
+      resultDlBtn.onclick = function(e){
+        e.preventDefault();
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = title + (currentType === 'video' ? '.mp4' : '.mp3');
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      };
+      resultDlBtn.href = '#';
       
       resultDlLbl.textContent = fileLabel;
       resultCard.style.display='flex';
