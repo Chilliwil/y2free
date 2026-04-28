@@ -52,14 +52,10 @@ h1{margin:0;font-size:clamp(40px,6.4vw,76px);line-height:1;letter-spacing:-.03em
 .warn-text{color:var(--warn);}
 .ok-text{color:var(--ok);}
 .mute-text{color:var(--mute);}
-
-/* PROGRESS */
 .progress-wrap{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:12px;animation:rise .3s ease-out;}
 .progress-label{font-family:var(--mono);font-size:12px;color:var(--dim);}
 .progress-bar-bg{height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
 .progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;transition:width .3s;width:0%;}
-
-/* RESULT */
 .result-card{background:var(--surface);border:1px solid rgba(52,211,153,.3);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:14px;animation:rise .3s ease-out;}
 .result-title{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .result-meta{font-family:var(--mono);font-size:11px;color:var(--dim);}
@@ -68,8 +64,6 @@ h1{margin:0;font-size:clamp(40px,6.4vw,76px);line-height:1;letter-spacing:-.03em
 .reset-btn{background:transparent;border:1px solid var(--border2);color:var(--dim);height:44px;padding:0 18px;border-radius:10px;font-size:13px;transition:all .2s;}
 .reset-btn:hover{border-color:var(--text);color:var(--text);}
 .result-actions{display:flex;gap:10px;flex-wrap:wrap;}
-
-/* FORMAT PANEL */
 .format-panel{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px;animation:rise .3s ease-out;}
 @keyframes rise{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 .row{display:flex;align-items:center;gap:12px;}
@@ -84,7 +78,6 @@ h1{margin:0;font-size:clamp(40px,6.4vw,76px);line-height:1;letter-spacing:-.03em
 .chip.on{background:var(--accent);border-color:var(--accent);color:white;}
 .chip-sub{font-size:9px;opacity:.55;}
 .chip.on .chip-sub{opacity:.8;}
-
 .stats{display:flex;gap:48px;flex-wrap:wrap;justify-content:center;margin-top:24px;padding-top:24px;border-top:1px solid var(--border);width:100%;}
 .stat-n{font-family:var(--mono);font-size:22px;font-weight:500;letter-spacing:-.02em;color:var(--accent);}
 .stat-l{font-family:var(--mono);font-size:11px;color:var(--mute);margin-top:2px;}
@@ -150,7 +143,6 @@ footer{margin-top:80px;padding:64px 32px 32px;border-top:1px solid var(--border)
     <p class="hero-sub fade" style="animation-delay:.3s">Pega. Convierte. Descarga. Tu próxima edición empieza aquí.</p>
 
     <div class="conv fade" style="animation-delay:.4s">
-      <!-- INPUT -->
       <div class="input-wrap" id="inputWrap">
         <span class="url-label">URL</span>
         <input class="url-input" id="urlInput" type="text" placeholder="Pega un link de YouTube aquí…" spellcheck="false" autocomplete="off"/>
@@ -164,7 +156,6 @@ footer{margin-top:80px;padding:64px 32px 32px;border-top:1px solid var(--border)
         <span id="idText" class="mute-text"></span>
       </div>
 
-      <!-- FORMAT SELECTOR -->
       <div class="format-panel" id="formatPanel" style="display:none">
         <div class="row">
           <span class="row-lbl">Tipo</span>
@@ -184,13 +175,11 @@ footer{margin-top:80px;padding:64px 32px 32px;border-top:1px solid var(--border)
         </button>
       </div>
 
-      <!-- PROGRESS -->
       <div class="progress-wrap" id="progressWrap" style="display:none">
         <div class="progress-label" id="progressLabel">Procesando…</div>
         <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
       </div>
 
-      <!-- RESULT -->
       <div class="result-card" id="resultCard" style="display:none">
         <div class="result-title" id="resultTitle"></div>
         <div class="result-meta" id="resultMeta"></div>
@@ -242,7 +231,7 @@ footer{margin-top:80px;padding:64px 32px 32px;border-top:1px solid var(--border)
   <div class="footer-top">
     <div>
       <div class="logo"><svg width="28" height="28" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" stroke="var(--accent)" stroke-width="1"/><circle cx="16" cy="16" r="9" stroke="var(--accent)" stroke-opacity=".5" stroke-width="1"/><circle cx="16" cy="16" r="2.5" fill="var(--accent)"/></svg><span class="logo-text">Y2<span class="logo-dot">·</span>Free</span></div>
-      <p class="footer-tag">Convertidor de audio de YouTube a MP3 para creadores audiovisuales.</p>
+      <p class="footer-tag">Convertidor de audio y video de YouTube para creadores audiovisuales.</p>
     </div>
     <div class="footer-cols">
       <div class="footer-col"><div class="footer-h">Producto</div><ul><li><a href="#">Conversor</a></li><li><a href="#">Características</a></li><li><a href="#">FAQ</a></li></ul></div>
@@ -255,8 +244,13 @@ footer{margin-top:80px;padding:64px 32px 32px;border-top:1px solid var(--border)
 
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────────
-const RAPIDAPI_KEY = '144a34d176mshf9fb36e0ea0618ap1211e4jsn83a547d354c7';
-const RAPIDAPI_HOST = 'youtube-mp3-audio-video-downloader.p.rapidapi.com';
+// API para AUDIO (MP3)
+const AUDIO_API_KEY  = '144a34d176mshf9fb36e0ea0618ap1211e4jsn83a547d354c7';
+const AUDIO_API_HOST = 'youtube-mp3-audio-video-downloader.p.rapidapi.com';
+
+// API para VIDEO (MP4) — YTStream
+const VIDEO_API_KEY  = '144a34d176mshf9fb36e0ea0618ap1211e4jsn83a547d354c7';
+const VIDEO_API_HOST = 'ytstream-download-youtube-videos.p.rapidapi.com';
 
 // ── WAVEFORM ────────────────────────────────────────────────────────
 const wf = document.getElementById('waveform');
@@ -388,11 +382,60 @@ function updateDlBtn(){
   dlBtnText.textContent = label;
 }
 
-// ── API CALL ──────────────────────────────────────────────────────────
+// ── API CALLS ──────────────────────────────────────────────────────────
+async function fetchAudio(id, quality){
+  const res = await fetch(
+    `https://${AUDIO_API_HOST}/mp3/${id}?quality=${quality}`,
+    { headers: { 'x-rapidapi-key': AUDIO_API_KEY, 'x-rapidapi-host': AUDIO_API_HOST } }
+  );
+  const data = await res.json();
+  if(data.url || data.link || data.downloadUrl){
+    return {
+      url: data.url || data.link || data.downloadUrl,
+      title: data.title || data.videoTitle || 'Audio descargado'
+    };
+  }
+  throw new Error(data.message || 'Sin URL de descarga');
+}
+
+async function fetchVideo(id, quality){
+  // YTStream devuelve formats[] con URLs directas de googlevideo
+  const res = await fetch(
+    `https://${VIDEO_API_HOST}/dl?id=${id}`,
+    { headers: { 'x-rapidapi-key': VIDEO_API_KEY, 'x-rapidapi-host': VIDEO_API_HOST } }
+  );
+  const data = await res.json();
+
+  if(data.status !== 'OK') throw new Error(data.message || 'Error al procesar video');
+
+  const title = data.title || 'Video descargado';
+
+  // Buscar en formats el que coincida con la calidad pedida
+  // YTStream devuelve qualityLabel como "720p", "1080p", "360p"
+  const formats = data.formats || [];
+  const adaptiveFormats = data.adaptiveFormats || [];
+  const allFormats = [...formats, ...adaptiveFormats];
+
+  // Filtrar solo video MP4 con la calidad pedida
+  const target = allFormats.find(f =>
+    f.mimeType && f.mimeType.includes('video/mp4') &&
+    f.qualityLabel && f.qualityLabel.includes(quality)
+  );
+
+  // Si no encuentra la calidad exacta, tomar el primer MP4 disponible
+  const fallback = allFormats.find(f =>
+    f.mimeType && f.mimeType.includes('video/mp4') && f.url
+  );
+
+  const chosen = target || fallback;
+  if(!chosen || !chosen.url) throw new Error('No se encontró formato de video disponible');
+
+  return { url: chosen.url, title };
+}
+
 async function handleConvert(){
   if(!currentId) return;
 
-  // Hide format panel, show progress
   formatPanel.style.display='none';
   resultCard.style.display='none';
   progressWrap.style.display='flex';
@@ -406,44 +449,21 @@ async function handleConvert(){
     let fileLabel = '';
 
     if(currentType === 'audio'){
-      // MP3 endpoint
       progressLbl.textContent = 'Extrayendo audio…';
       progressFill.style.width = '30%';
-
-      const res = await fetch(
-        `https://${RAPIDAPI_HOST}/mp3/${currentId}?quality=${currentFormat}`,
-        { headers: { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': RAPIDAPI_HOST } }
-      );
-      progressFill.style.width = '70%';
-      const data = await res.json();
-
-      if(data.url || data.link || data.downloadUrl){
-        downloadUrl = data.url || data.link || data.downloadUrl;
-        title = data.title || data.videoTitle || 'Audio descargado';
-        fileLabel = 'Descargar MP3 '+currentFormat+'kbps';
-      } else {
-        throw new Error(data.message || 'Sin URL de descarga');
-      }
-
+      const result = await fetchAudio(currentId, currentFormat);
+      downloadUrl = result.url;
+      title = result.title;
+      fileLabel = 'Descargar MP3 '+currentFormat+'kbps';
+      progressFill.style.width = '90%';
     } else {
-      // MP4 endpoint
       progressLbl.textContent = 'Procesando video…';
       progressFill.style.width = '30%';
-
-      const res = await fetch(
-        `https://${RAPIDAPI_HOST}/mp4/${currentId}?quality=${currentFormat}`,
-        { headers: { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': RAPIDAPI_HOST } }
-      );
-      progressFill.style.width = '70%';
-      const data = await res.json();
-
-      if(data.url || data.link || data.downloadUrl){
-        downloadUrl = data.url || data.link || data.downloadUrl;
-        title = data.title || data.videoTitle || 'Video descargado';
-        fileLabel = 'Descargar MP4 '+currentFormat+'p';
-      } else {
-        throw new Error(data.message || 'Sin URL de descarga');
-      }
+      const result = await fetchVideo(currentId, currentFormat);
+      downloadUrl = result.url;
+      title = result.title;
+      fileLabel = 'Descargar MP4 '+currentFormat+'p';
+      progressFill.style.width = '90%';
     }
 
     progressFill.style.width = '100%';
