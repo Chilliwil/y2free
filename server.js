@@ -1,6 +1,5 @@
 const express = require('express');
 const fetch = require('node-fetch');
-const path = require('path');
 const app = express();
 
 app.use(express.static('.'));
@@ -31,7 +30,8 @@ app.get('/api/proxy', async (req, res) => {
     });
 
     res.setHeader('Content-Type', 'video/mp4');
-    res.setHeader('Content-Disposition', `attachment; filename="${data.title||'video'}.mp4"`);
+    res.setHeader('Content-Disposition', `attachment; filename="video.mp4"`);
+    res.setHeader('Access-Control-Allow-Origin', '*');
     videoRes.body.pipe(res);
 
   } catch(err) {
@@ -39,4 +39,4 @@ app.get('/api/proxy', async (req, res) => {
   }
 });
 
-app.listen(process.env.PORT || 3000);
+app.listen(process.env.PORT || 3000, () => console.log('Server running'));
