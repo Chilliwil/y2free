@@ -399,38 +399,13 @@ async function fetchAudio(id, quality){
 }
 
 async function fetchVideo(id, quality){
-  // YTStream devuelve formats[] con URLs directas de googlevideo
+  // Llamar al proxy de Render que devuelve la URL directa
   const res = await fetch(
-    `https://${VIDEO_API_HOST}/dl?id=${id}`,
-    { headers: { 'x-rapidapi-key': VIDEO_API_KEY, 'x-rapidapi-host': VIDEO_API_HOST } }
+    `https://y2free.onrender.com/api/proxy?id=${id}&quality=${quality}`
   );
   const data = await res.json();
-
-  if(data.status !== 'OK') throw new Error(data.message || 'Error al procesar video');
-
-  const title = data.title || 'Video descargado';
-
-  // Buscar en formats el que coincida con la calidad pedida
-  // YTStream devuelve qualityLabel como "720p", "1080p", "360p"
-  const formats = data.formats || [];
-  const adaptiveFormats = data.adaptiveFormats || [];
-  const allFormats = [...formats, ...adaptiveFormats];
-
-  // Filtrar solo video MP4 con la calidad pedida
-  const target = allFormats.find(f =>
-    f.mimeType && f.mimeType.includes('video/mp4') &&
-    f.qualityLabel && f.qualityLabel.includes(quality)
-  );
-
-  // Si no encuentra la calidad exacta, tomar el primer MP4 disponible
-  const fallback = allFormats.find(f =>
-    f.mimeType && f.mimeType.includes('video/mp4') && f.url
-  );
-
-  const chosen = target || fallback;
-  if(!chosen || !chosen.url) throw new Error('No se encontró formato de video disponible');
-
-  return { url: chosen.url, title };
+  if(data.error) throw new Error(data.error);
+  return { url: data.url, title: data.title || 'Video descargado' };
 }
 
 async function handleConvert(){
@@ -474,11 +449,19 @@ async function handleConvert(){
       resultTitle.textContent = title;
       resultMeta.textContent = currentType==='audio' ? 'MP3 · '+currentFormat+' kbps' : 'MP4 · '+currentFormat+'p';
       
-      // Para video usamos el proxy de Vercel para evitar 403 de googlevideo
+      // Para video abrimos la URL directa
       if(currentType === 'video'){
-        resultDlBtn.onclick = null;
-        resultDlBtn.href = 'https://y2free.onrender.com/api/proxy?id=' + currentId + '&quality=' + currentFormat;
-        resultDlBtn.download = title + '.mp4';
+        resultDlBtn.onclick = function(e){
+          e.preventDefault();
+          const a = document.createElement('a');
+          a.href = downloadUrl;
+          a.download = title + '.mp4';
+          a.target = '_blank';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        };
+        resultDlBtn.href = '#';
       } else {
         resultDlBtn.onclick = null;
         resultDlBtn.href = downloadUrl;
