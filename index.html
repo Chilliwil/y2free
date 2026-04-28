@@ -443,18 +443,13 @@ async function handleConvert(){
       resultTitle.textContent = title;
       resultMeta.textContent = currentType==='audio' ? 'MP3 · '+currentFormat+' kbps' : 'MP4 · '+currentFormat+'p';
       
-      // Abrir URL directa para audio y video
-      resultDlBtn.onclick = function(e){
-        e.preventDefault();
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = title + (currentType === 'video' ? '.mp4' : '.mp3');
-        a.target = '_blank';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      };
-      resultDlBtn.href = '#';
+      // Descargar via proxy de Render
+      const proxyUrl = currentType === 'audio'
+        ? `https://y2free.onrender.com/api/proxy?id=${currentId}&type=audio`
+        : `https://y2free.onrender.com/api/proxy?id=${currentId}&quality=${currentFormat}`;
+      resultDlBtn.onclick = null;
+      resultDlBtn.href = proxyUrl;
+      resultDlBtn.download = title + (currentType === 'video' ? '.mp4' : '.mp3');
       
       resultDlLbl.textContent = fileLabel;
       resultCard.style.display='flex';
