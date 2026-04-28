@@ -474,27 +474,11 @@ async function handleConvert(){
       resultTitle.textContent = title;
       resultMeta.textContent = currentType==='audio' ? 'MP3 · '+currentFormat+' kbps' : 'MP4 · '+currentFormat+'p';
       
-      // Para video usamos descarga via blob para evitar 403 de googlevideo
+      // Para video usamos el proxy de Vercel para evitar 403 de googlevideo
       if(currentType === 'video'){
-        resultDlBtn.onclick = async function(e){
-          e.preventDefault();
-          resultDlLbl.textContent = 'Descargando…';
-          try {
-            const blob = await fetch(downloadUrl).then(r => r.blob());
-            const blobUrl = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = blobUrl;
-            a.download = title + '.mp4';
-            a.click();
-            URL.revokeObjectURL(blobUrl);
-            resultDlLbl.textContent = fileLabel;
-          } catch(err) {
-            // Fallback: abrir en nueva pestaña
-            window.open(downloadUrl, '_blank');
-            resultDlLbl.textContent = fileLabel;
-          }
-        };
-        resultDlBtn.href = '#';
+        resultDlBtn.onclick = null;
+        resultDlBtn.href = '/api/proxy?url=' + encodeURIComponent(downloadUrl);
+        resultDlBtn.download = title + '.mp4';
       } else {
         resultDlBtn.onclick = null;
         resultDlBtn.href = downloadUrl;
