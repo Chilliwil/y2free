@@ -10,7 +10,7 @@ app.use((req, res, next) => {
 app.use(express.static('.'));
 
 app.get('/api/proxy', async (req, res) => {
-  const { id, quality } = req.query;
+  const { id, quality, type } = req.query;
   if (!id) return res.status(400).json({ error: 'No video ID' });
 
   try {
@@ -25,13 +25,21 @@ app.get('/api/proxy', async (req, res) => {
     if (data.status !== 'OK') return res.status(500).json({ error: 'API error' });
 
     const allFormats = [...(data.formats||[]), ...(data.adaptiveFormats||[])];
-    const target = allFormats.find(f => f.mimeType?.includes('video/mp4') && f.qualityLabel?.includes(quality||'360'))
-                || allFormats.find(f => f.mimeType?.includes('video/mp4') && f.url);
+    
+    let target;
+    if(type === 'audio'){
+      // Buscar formato de solo audio
+      target = allFormats.find(f => f.mimeType?.includes('audio/mp4') && f.url)
+            || allFormats.find(f => f.mimeType?.includes('audio') && f.url);
+    } else {
+      // Buscar video MP4 con la calidad pedida
+      target = allFormats.find(f => f.mimeType?.includes('video/mp4') && f.qualityLabel?.includes(quality||'360'))
+            || allFormats.find(f => f.mimeType?.includes('video/mp4') && f.url);
+    }
 
     if (!target?.url) return res.status(404).json({ error: 'No format found' });
 
-    // Devolver la URL directa en vez de hacer streaming
-    res.json({ url: target.url, title: data.title });
+    res.json({ url: target.url, title: data.title || 'Descarga' });
 
   } catch(err) {
     console.error('Error:', err.message);
