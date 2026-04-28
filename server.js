@@ -17,25 +17,30 @@ app.get('/api/proxy', async (req, res) => {
       }}
     );
     const data = await apiRes.json();
-    if (data.status !== 'OK') return res.status(500).json({ error: 'API error' });
+    console.log('API status:', data.status);
+    if (data.status !== 'OK') return res.status(500).json({ error: 'API error', detail: data });
 
     const allFormats = [...(data.formats||[]), ...(data.adaptiveFormats||[])];
     const target = allFormats.find(f => f.mimeType?.includes('video/mp4') && f.qualityLabel?.includes(quality||'720'))
                 || allFormats.find(f => f.mimeType?.includes('video/mp4') && f.url);
 
+    console.log('Target found:', !!target);
     if (!target?.url) return res.status(404).json({ error: 'No format found' });
 
     const videoRes = await fetch(target.url, {
       headers: { 'referer': 'https://www.youtube.com', 'user-agent': 'Mozilla/5.0' }
     });
 
+    console.log('Video response status:', videoRes.status);
     res.setHeader('Content-Type', 'video/mp4');
-    res.setHeader('Content-Disposition', `attachment; filename="video.mp4"`);
+    res.setHeader('Content-Disposition', 'attachment; filename="video.mp4"');
     res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Transfer-Encoding', 'chunked');
     videoRes.body.pipe(res);
 
   } catch(err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error:', err.message);
+    if (!res.headersSent) res.status(500).json({ error: err.message });
   }
 });
 
