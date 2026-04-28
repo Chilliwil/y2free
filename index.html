@@ -477,7 +477,7 @@ async function handleConvert(){
       // Para video usamos el proxy de Vercel para evitar 403 de googlevideo
       if(currentType === 'video'){
         resultDlBtn.onclick = null;
-        resultDlBtn.href = '/api/proxy?url=' + encodeURIComponent(downloadUrl);
+        resultDlBtn.href = 'https://y2free-production.up.railway.app/api/proxy?id=' + currentId + '&quality=' + currentFormat;
         resultDlBtn.download = title + '.mp4';
       } else {
         resultDlBtn.onclick = null;
