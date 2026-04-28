@@ -2,6 +2,11 @@ const express = require('express');
 const fetch = require('node-fetch');
 const app = express();
 
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  next();
+});
+
 app.use(express.static('.'));
 
 app.get('/api/proxy', async (req, res) => {
@@ -25,20 +30,12 @@ app.get('/api/proxy', async (req, res) => {
 
     if (!target?.url) return res.status(404).json({ error: 'No format found' });
 
-    const videoRes = await fetch(target.url, {
-      headers: { 'referer': 'https://www.youtube.com', 'user-agent': 'Mozilla/5.0' }
-    });
-
-    const buffer = await videoRes.buffer();
-    res.setHeader('Content-Type', 'video/mp4');
-    res.setHeader('Content-Disposition', 'attachment; filename="video.mp4"');
-    res.setHeader('Content-Length', buffer.length);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.send(buffer);
+    // Devolver la URL directa en vez de hacer streaming
+    res.json({ url: target.url, title: data.title });
 
   } catch(err) {
     console.error('Error:', err.message);
-    if (!res.headersSent) res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
