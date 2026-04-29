@@ -22,11 +22,13 @@ app.get('/api/proxy', async (req, res) => {
   if (!id) return res.status(400).json({ error: 'No video ID' });
 
   try {
-    // PASO 1: Iniciar conversión (POST con query params, no body)
     const youtubeUrl = `https://www.youtube.com/watch?v=${id}`;
     const format = type === 'video' ? 'MP4' : 'MP3';
     
-    const downloadEndpoint = `https://${RAPIDAPI_HOST}/conversis/api/download?url=${encodeURIComponent(youtubeUrl)}&format=${format}&quality=0`;
+    // PASO 1: POST /download con query parameter url
+    const downloadEndpoint = `https://${RAPIDAPI_HOST}/download?url=${encodeURIComponent(youtubeUrl)}&format=${format}&quality=0`;
+    
+    console.log('POST', downloadEndpoint);
     
     const downloadRes = await fetch(downloadEndpoint, {
       method: 'POST',
@@ -34,13 +36,15 @@ app.get('/api/proxy', async (req, res) => {
     });
     
     const downloadData = await downloadRes.json();
+    console.log('Download response:', JSON.stringify(downloadData));
+    
     if (!downloadData.id) {
       return res.status(500).json({ error: 'Failed to start conversion', detail: downloadData });
     }
 
     const conversionId = downloadData.id;
 
-    // PASO 2: Polling al status
+    // PASO 2: GET /status/:id en loop
     let statusData = null;
     const maxAttempts = 30;
     
@@ -48,7 +52,7 @@ app.get('/api/proxy', async (req, res) => {
       await sleep(2000);
       
       const statusRes = await fetch(
-        `https://${RAPIDAPI_HOST}/conversis/api/status/${conversionId}`,
+        `https://${RAPIDAPI_HOST}/status/${conversionId}`,
         { headers: RAPIDAPI_HEADERS }
       );
       statusData = await statusRes.json();
