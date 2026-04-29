@@ -4,86 +4,80 @@ const app = express();
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Range');
-  res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Range, Accept-Ranges');
   next();
 });
 
 app.use(express.static('.'));
 
+const RAPIDAPI_HOST = 'youtube-to-mp315.p.rapidapi.com';
+const RAPIDAPI_HEADERS = {
+  'x-rapidapi-key': process.env.RAPIDAPI_KEY,
+  'x-rapidapi-host': RAPIDAPI_HOST,
+  'Content-Type': 'application/json'
+};
+
+// Helper: esperar X milisegundos
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
 app.get('/api/proxy', async (req, res) => {
-  const { id, quality, type } = req.query;
+  const { id, type } = req.query;
   if (!id) return res.status(400).json({ error: 'No video ID' });
 
   try {
-    const apiRes = await fetch(
-      `https://ytstream-download-youtube-videos.p.rapidapi.com/dl?id=${id}`,
+    // PASO 1: Iniciar conversión
+    const downloadRes = await fetch(
+      `https://${RAPIDAPI_HOST}/download`,
       {
-        headers: {
-          'x-rapidapi-key': process.env.RAPIDAPI_KEY,
-          'x-rapidapi-host': 'ytstream-download-youtube-videos.p.rapidapi.com'
-        }
+        method: 'POST',
+        headers: RAPIDAPI_HEADERS,
+        body: JSON.stringify({
+          url: `https://www.youtube.com/watch?v=${id}`,
+          format: type === 'video' ? 'MP4' : 'MP3',
+          quality: 0
+        })
       }
     );
-    const data = await apiRes.json();
-    if (data.status !== 'OK') return res.status(500).json({ error: 'API error', detail: data });
-
-    const allFormats = [...(data.formats || []), ...(data.adaptiveFormats || [])];
-
-    let target;
-    if (type === 'audio') {
-      target = allFormats.find(f => f.mimeType?.includes('audio/mp4') && f.url)
-            || allFormats.find(f => f.mimeType?.includes('audio') && f.url);
-    } else {
-      target = allFormats.find(f => f.mimeType?.includes('video/mp4') && f.qualityLabel?.includes(quality || '360') && f.url)
-            || allFormats.find(f => f.mimeType?.includes('video/mp4') && f.url);
-    }
-
-    if (!target?.url) return res.status(404).json({ error: 'No format found' });
-
-    const upstreamHeaders = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept': '*/*',
-      'Accept-Language': 'en-US,en;q=0.9',
-      'Referer': 'https://www.youtube.com/',
-      'Origin': 'https://www.youtube.com',
-      'Range': req.headers.range || 'bytes=0-'
-    };
-
-    const mediaRes = await fetch(target.url, { headers: upstreamHeaders });
-
-    if (!mediaRes.ok && mediaRes.status !== 206) {
-      const errBody = await mediaRes.text().catch(() => '');
-      console.error('Googlevideo rejected:', mediaRes.status, errBody.slice(0, 200));
-      return res.status(502).json({ 
-        error: 'Upstream rejected', 
-        status: mediaRes.status
-      });
-    }
-
-    const filename = type === 'audio' ? 'audio.mp3' : 'video.mp4';
-    const contentType = type === 'audio' ? 'audio/mpeg' : 'video/mp4';
-
-    res.status(mediaRes.status);
-    res.setHeader('Content-Type', contentType);
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.setHeader('Accept-Ranges', 'bytes');
     
-    const cl = mediaRes.headers.get('content-length');
-    const cr = mediaRes.headers.get('content-range');
-    if (cl) res.setHeader('Content-Length', cl);
-    if (cr) res.setHeader('Content-Range', cr);
+    const downloadData = await downloadRes.json();
+    if (!downloadData.id) {
+      return res.status(500).json({ error: 'Failed to start conversion', detail: downloadData });
+    }
 
-    mediaRes.body.on('error', (e) => {
-      console.error('Stream error:', e.message);
-      if (!res.writableEnded) res.end();
+    const conversionId = downloadData.id;
+
+    // PASO 2: Hacer polling al status hasta que esté DONE
+    let statusData = null;
+    const maxAttempts = 30; // 30 intentos × 2s = 60s máximo
+    
+    for (let i = 0; i < maxAttempts; i++) {
+      await sleep(2000); // esperar 2 segundos entre intentos
+      
+      const statusRes = await fetch(
+        `https://${RAPIDAPI_HOST}/status/${conversionId}`,
+        { headers: RAPIDAPI_HEADERS }
+      );
+      statusData = await statusRes.json();
+      
+      if (statusData.status === 'DONE') break;
+      if (statusData.status === 'FAILED' || statusData.status === 'ERROR') {
+        return res.status(500).json({ error: 'Conversion failed', detail: statusData });
+      }
+    }
+
+    if (statusData?.status !== 'DONE') {
+      return res.status(504).json({ error: 'Conversion timeout' });
+    }
+
+    // PASO 3: Devolver la URL de descarga al frontend
+    return res.json({
+      downloadUrl: statusData.downloadUrl,
+      title: statusData.title || 'audio',
+      format: statusData.format || (type === 'video' ? 'MP4' : 'MP3')
     });
-    
-    mediaRes.body.pipe(res);
 
   } catch (err) {
     console.error('Server error:', err.message);
-    if (!res.headersSent) res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
