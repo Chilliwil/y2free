@@ -197,7 +197,7 @@ footer{margin-top:80px;padding:64px 32px 32px;border-top:1px solid var(--border)
     <div class="stats fade" style="animation-delay:.5s">
       <div class="stat"><div class="stat-n">2.4M</div><div class="stat-l">conversiones / mes</div></div>
       <div class="stat"><div class="stat-n">320kbps</div><div class="stat-l">calidad máxima</div></div>
-      <div class="stat"><div class="stat-n">&lt;8s</div><div class="stat-l">tiempo promedio</div></div>
+      <div class="stat"><div class="stat-n">&lt;30s</div><div class="stat-l">tiempo promedio</div></div>
       <div class="stat"><div class="stat-n">100%</div><div class="stat-l">gratis · sin login</div></div>
     </div>
   </div>
@@ -244,13 +244,7 @@ footer{margin-top:80px;padding:64px 32px 32px;border-top:1px solid var(--border)
 
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────────
-// API para AUDIO (MP3)
-const AUDIO_API_KEY  = '144a34d176mshf9fb36e0ea0618ap1211e4jsn83a547d354c7';
-const AUDIO_API_HOST = 'youtube-mp3-audio-video-downloader.p.rapidapi.com';
-
-// API para VIDEO (MP4) — YTStream
-const VIDEO_API_KEY  = '144a34d176mshf9fb36e0ea0618ap1211e4jsn83a547d354c7';
-const VIDEO_API_HOST = 'ytstream-download-youtube-videos.p.rapidapi.com';
+const BACKEND = 'https://y2free.onrender.com';
 
 // ── WAVEFORM ────────────────────────────────────────────────────────
 const wf = document.getElementById('waveform');
@@ -382,81 +376,78 @@ function updateDlBtn(){
   dlBtnText.textContent = label;
 }
 
-// ── API CALLS ──────────────────────────────────────────────────────────
-async function fetchAudio(id, quality){
-  const res = await fetch(
-    `https://y2free.onrender.com/api/proxy?id=${id}&type=audio`
-  );
-  const data = await res.json();
-  if(data.error) throw new Error(data.error);
-  return { url: data.url, title: data.title || 'Audio descargado' };
-}
-
-async function fetchVideo(id, quality){
-  // Llamar al proxy de Render que devuelve la URL directa
-  const res = await fetch(
-    `https://y2free.onrender.com/api/proxy?id=${id}&quality=${quality}`
-  );
-  const data = await res.json();
-  if(data.error) throw new Error(data.error);
-  return { url: data.url, title: data.title || 'Video descargado' };
-}
-
+// ── HANDLE CONVERT ────────────────────────────────────────────────────
 async function handleConvert(){
   if(!currentId) return;
 
   formatPanel.style.display='none';
   resultCard.style.display='none';
   progressWrap.style.display='flex';
+  progressFill.style.background='';
+  progressFill.style.width = '5%';
   progressLbl.textContent = 'Conectando con el servidor…';
-  progressFill.style.width = '10%';
   convertBtn.disabled=true;
 
-  try {
-    let downloadUrl = null;
-    let title = '';
-    let fileLabel = '';
+  // Simular progreso visual mientras espera (la API tarda 10-30s)
+  let pct = 5;
+  const progressMsgs = [
+    'Iniciando conversión…',
+    'Procesando el video…',
+    'Extrayendo audio…',
+    'Casi listo, esto puede tardar unos segundos…',
+    'Finalizando…'
+  ];
+  let msgIdx = 0;
+  const progressInterval = setInterval(()=>{
+    if(pct < 90){
+      pct += Math.random() * 6;
+      progressFill.style.width = Math.min(pct, 90) + '%';
+    }
+    if(msgIdx < progressMsgs.length){
+      progressLbl.textContent = progressMsgs[msgIdx];
+      msgIdx++;
+    }
+  }, 3000);
 
-    if(currentType === 'audio'){
-      progressLbl.textContent = 'Extrayendo audio…';
-      progressFill.style.width = '30%';
-      const result = await fetchAudio(currentId, currentFormat);
-      downloadUrl = result.url;
-      title = result.title;
-      fileLabel = 'Descargar MP3 '+currentFormat+'kbps';
-      progressFill.style.width = '90%';
-    } else {
-      progressLbl.textContent = 'Procesando video…';
-      progressFill.style.width = '30%';
-      const result = await fetchVideo(currentId, currentFormat);
-      downloadUrl = result.url;
-      title = result.title;
-      fileLabel = 'Descargar MP4 '+currentFormat+'p';
-      progressFill.style.width = '90%';
+  try {
+    const res = await fetch(
+      `${BACKEND}/api/proxy?id=${currentId}&type=${currentType}&quality=${currentFormat}`
+    );
+    const data = await res.json();
+
+    clearInterval(progressInterval);
+
+    if(data.error){
+      throw new Error(data.error);
+    }
+    if(!data.downloadUrl){
+      throw new Error('No se recibió URL de descarga');
     }
 
     progressFill.style.width = '100%';
     progressLbl.textContent = '¡Listo!';
 
+    const title = data.title || 'Archivo descargado';
+    const fileLabel = currentType==='audio'
+      ? 'Descargar MP3 '+currentFormat+'kbps'
+      : 'Descargar MP4 '+currentFormat+'p';
+
     setTimeout(()=>{
       progressWrap.style.display='none';
       resultTitle.textContent = title;
-      resultMeta.textContent = currentType==='audio' ? 'MP3 · '+currentFormat+' kbps' : 'MP4 · '+currentFormat+'p';
-      
-      // Descargar via proxy de Render
-      const proxyUrl = currentType === 'audio'
-        ? `https://y2free.onrender.com/api/proxy?id=${currentId}&type=audio`
-        : `https://y2free.onrender.com/api/proxy?id=${currentId}&quality=${currentFormat}`;
-      resultDlBtn.onclick = null;
-      resultDlBtn.href = proxyUrl;
-      resultDlBtn.download = title + (currentType === 'video' ? '.mp4' : '.mp3');
-      
+      resultMeta.textContent = currentType==='audio'
+        ? 'MP3 · '+currentFormat+' kbps'
+        : 'MP4 · '+currentFormat+'p';
+
+      resultDlBtn.href = data.downloadUrl;
+      resultDlBtn.download = title + (currentType==='video' ? '.mp4' : '.mp3');
       resultDlLbl.textContent = fileLabel;
       resultCard.style.display='flex';
       convertBtn.disabled=false;
-    }, 500);
+    }, 600);
 
   } catch(err){
+    clearInterval(progressInterval);
     progressFill.style.width = '100%';
     progressFill.style.background = 'var(--warn)';
     progressLbl.textContent = 'Error: '+err.message+'. Intenta con otro video.';
@@ -466,7 +457,7 @@ async function handleConvert(){
       progressWrap.style.display='none';
       progressFill.style.background='';
       progressFill.style.width='0%';
-    }, 3000);
+    }, 4000);
   }
 }
 
